@@ -7,7 +7,11 @@ const app = express();
 app.use(cors({ origin: process.env.FRONTEND_URL || true })); app.use(express.json());
 app.get("/api/health", (_req, res) => res.json({ success: true, data: { status: "ok" } }));
 app.use("/uploads", express.static(path.resolve("uploads")));
-app.use("/api/auth", authRoutes); app.use("/api/documents", documentRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/auth", authRoutes);
+app.use("/api/documents", documentRoutes);
+app.use("/documents", documentRoutes);
+
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
   if (err instanceof Error && err.name === "ZodError") return res.status(400).json({ success: false, message: "Please check the submitted information.", errors: err });
