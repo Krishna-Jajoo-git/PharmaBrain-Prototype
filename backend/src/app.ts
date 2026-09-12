@@ -12,7 +12,8 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
   console.error(err);
   if (err instanceof Error && err.name === "ZodError") return res.status(400).json({ success: false, message: "Please check the submitted information.", errors: err });
   if (err instanceof Error && err.name === "MulterError") return res.status(400).json({ success: false, message: err.message });
-  const message = process.env.NODE_ENV === "development" && err instanceof Error ? `Server error: ${err.message}` : "Something went wrong. Please try again.";
+  const message = err instanceof Error ? err.message : "Something went wrong. Please try again.";
   return res.status(500).json({ success: false, message });
 });
+
 export default app;
