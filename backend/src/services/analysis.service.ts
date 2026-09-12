@@ -65,9 +65,18 @@ export async function analyseFile(source: string | Buffer, mimeType: string, typ
   }
 
   const modelsToTry = Array.from(new Set([env.geminiModel, "gemini-2.0-flash", "gemini-1.5-flash"])).filter(Boolean);
-  const data = Buffer.isBuffer(source) ? source : source.startsWith("http")
-    ? Buffer.from(await (await fetch(source)).arrayBuffer())
-    : await fs.readFile(source);
+  let data: Buffer;
+  if (Buffer.isBuffer(source)) {
+    data = source;
+  } else if (source.startsWith("data:")) {
+    const base64Data = source.split(",")[1] || "";
+    data = Buffer.from(base64Data, "base64");
+  } else if (source.startsWith("http://") || source.startsWith("https://")) {
+    data = Buffer.from(await (await fetch(source)).arrayBuffer());
+  } else {
+    data = await fs.readFile(source);
+  }
+
   const ai = new GoogleGenAI({ apiKey: env.geminiKey });
   const prompt = `You are an AI assistant for a medical document summarisation academic prototype called PharmaBrain. Analyse only clearly visible information in this SAMPLE document. Do not diagnose, prescribe, recommend dosage changes, or invent missing facts. If unclear write exactly: Not clearly readable from the uploaded document. Return JSON only with documentType (${type}), summary, medicines (objects with name,dosage,duration,instructions), keyFindings, precautions, questionsForDoctor, disclaimer. Disclaimer must say informational, may contain errors, and verify with qualified healthcare professional.`;
 
