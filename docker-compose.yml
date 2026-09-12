@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: pharmabrain-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pharmabrain
+      POSTGRES_USER: ${POSTGRES_USER:-pharmabrain_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pharmabrain_password}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pharmabrain_pgdata:/var/lib/postgresql/data
+
+volumes:
+  pharmabrain_pgdata:

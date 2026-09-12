@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+enum DocumentType {
+  PRESCRIPTION
+  REPORT
+}
+
+enum DocumentStatus {
+  UPLOADED
+  ANALYSING
+  ANALYSED
+  FAILED
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  name String
+  email String @unique
+  passwordHash String
+  createdAt DateTime @default(now())
+  documents Document[]
+}
+model Document {
+  id Int @id @default(autoincrement())
+  userId Int
+  originalName String
+  storedFilename String
+  documentType DocumentType
+  mimeType String
+  filePath String
+  status DocumentStatus @default(UPLOADED)
+  uploadedAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analysis Analysis?
+  @@index([userId])
+}
+model Analysis {
+  id Int @id @default(autoincrement())
+  documentId Int @unique
+  summary String
+  structuredResult Json
+  isDemo Boolean @default(false)
+  createdAt DateTime @default(now())
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+}
