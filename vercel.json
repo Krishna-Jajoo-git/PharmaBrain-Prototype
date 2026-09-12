@@ -2,6 +2,11 @@
   "version": 2,
   "buildCommand": "cd backend && npm install && npx prisma generate && npm run build && cd ../frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "backend/**"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
@@ -12,5 +17,5 @@
       "destination": "/index.html"
     }
   ]
-
 }
+
