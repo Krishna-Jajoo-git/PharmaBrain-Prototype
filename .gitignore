@@ -1,7 +1,21 @@
+# Dependencies & build output
 node_modules/
+**/node_modules/
 dist/
+**/dist/
+frontend/.vite/
+
+# Environment files and credentials
 .env
-*.log
+.env.*
+*.env
+.env.local
+
+# User uploaded files
 backend/uploads/*
 !backend/uploads/.gitkeep
-frontend/.vite/
+
+# Logs and local Neon CLI context
+*.log
+.neon
+.neon/

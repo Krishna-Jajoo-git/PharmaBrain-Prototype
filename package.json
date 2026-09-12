@@ -1,0 +1,27 @@
+{
+  "name": "pharmabrain-prototype",
+  "version": "1.0.0",
+  "description": "PharmaBrain is a full-stack academic demonstration prototype for JWT authentication, local medical-document uploads, PostgreSQL persistence, and cautious AI-assisted summarisation. It is **not** a healthcare service: use SAMPLE / FAKE documents only, and never use its output as a diagnosis, prescription, or treatment instruction.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Krishna-Jajoo-git/PharmaBrain-Prototype.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Krishna-Jajoo-git/PharmaBrain-Prototype/issues"
+  },
+  "homepage": "https://github.com/Krishna-Jajoo-git/PharmaBrain-Prototype#readme",
+  "devDependencies": {
+    "@neon/config": "^1.4.2"
+  },
+  "dependencies": {
+    "@neon/env": "^1.3.2"
+  }
+}
