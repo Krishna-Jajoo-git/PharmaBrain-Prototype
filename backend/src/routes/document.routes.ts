@@ -9,8 +9,12 @@ import { requireAuth } from "../middleware/auth.js";
 import { analyseFile } from "../services/analysis.service.js";
 import { put } from "@vercel/blob";
 import type { AuthRequest } from "../types/index.js";
-const router = Router(); const uploadDir = path.resolve("uploads");
-await fs.mkdir(uploadDir, { recursive: true });
+const router = Router();
+const uploadDir = path.resolve("uploads");
+if (!process.env.VERCEL) {
+  await fs.mkdir(uploadDir, { recursive: true }).catch(() => undefined);
+}
+
 const allowed = new Set(["image/jpeg", "image/png", "application/pdf"]);
 const localStorage = multer.diskStorage({ destination: (_req, _file, cb) => cb(null, uploadDir), filename: (_req, file, cb) => cb(null, `${randomUUID()}${path.extname(file.originalname).toLowerCase()}`) });
 const storage = process.env.VERCEL ? multer.memoryStorage() : localStorage;
