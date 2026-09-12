@@ -117,3 +117,6 @@ For the frontend Vercel project, configure `VITE_API_URL` to the deployed backen
 ## Limitations and disclaimer
 
 This is intentionally a local academic prototype. Local file storage, local token storage, and Docker credentials are appropriate only for demonstration. AI output may be incomplete or wrong. It does not diagnose disease, generate prescriptions, make autonomous decisions, connect to hospitals, or order medicine. Always verify document content and any health question with a qualified healthcare professional.
+
+
+--- Swayam's update ---
