@@ -8,8 +8,10 @@ frontend/.vite/
 # Environment files and credentials
 .env
 .env.*
+!.env.example
 *.env
 .env.local
+
 
 # User uploaded files
 backend/uploads/*
