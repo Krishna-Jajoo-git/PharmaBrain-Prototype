@@ -5,6 +5,7 @@ import { Logo } from "../components/Logo";
 import { useAuth } from "../context/AuthContext";
 import { authApi } from "../services/api";
 
+
 export function AuthPage({ mode }: { mode: "login" | "register" }) {
   const register = mode === "register";
   const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { BarChart3, FileText, LoaderCircle, Trash2, UploadCloud } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { documentApi } from "../services/api";
-import { useAuth } from "../context/AuthContext";
 import { useToast } from "../components/Toast";
 import type { Document, DocumentType, AnalysisResult } from "../types";
 
@@ -404,42 +403,6 @@ function ResultList({ title, items }: { title: string; items: string[] }) {
         ))}
       </ul>
     </section>
-  );
-}
-
-export function ProfilePage() {
-  const { user, logout } = useAuth();
-  const nav = useNavigate();
-
-  return (
-    <div className="max-w-xl">
-      <h1 className="text-3xl font-bold">Profile</h1>
-      <div className="card mt-7 divide-y">
-        <div className="p-5">
-          <p className="text-sm text-slate-500">Full name</p>
-          <p className="mt-1 font-semibold">{user?.name}</p>
-        </div>
-        <div className="p-5">
-          <p className="text-sm text-slate-500">Email</p>
-          <p className="mt-1 font-semibold">{user?.email}</p>
-        </div>
-        <div className="p-5">
-          <p className="text-sm text-slate-500">Account created</p>
-          <p className="mt-1 font-semibold">
-            {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "—"}
-          </p>
-        </div>
-      </div>
-      <button
-        className="btn-secondary mt-5 text-rose-600"
-        onClick={() => {
-          logout();
-          nav("/");
-        }}
-      >
-        Logout
-      </button>
-    </div>
   );
 }
 

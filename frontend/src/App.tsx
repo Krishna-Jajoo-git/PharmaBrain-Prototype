@@ -6,10 +6,10 @@ import { AuthPage } from "./pages/AuthPages";
 import {
   DashboardPage,
   DocumentsPage,
-  ProfilePage,
   ResultsPage,
   UploadPage,
 } from "./pages/AppPages";
+import { ProfilePage } from "./pages/ProfilePage";
 
 function Protected() {
   const { user, loading } = useAuth();
