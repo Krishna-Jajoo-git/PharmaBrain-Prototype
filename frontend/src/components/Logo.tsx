@@ -1,1 +1,15 @@
-import { BrainCircuit } from "lucide-react"; export function Logo() { return <div className="flex items-center gap-2 font-bold text-slate-900"><span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-600 text-white"><BrainCircuit size={21}/></span><span>Pharma<span className="text-brand-600">Brain</span></span></div>; }
+import { BrainCircuit } from "lucide-react";
+
+export function Logo() {
+  return (
+    <div className="flex items-center gap-2 font-bold text-slate-900">
+      <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-600 text-white">
+        <BrainCircuit size={21} />
+      </span>
+      <span>
+        Pharma<span className="text-brand-600">Brain</span>
+      </span>
+    </div>
+  );
+}
+

@@ -6,11 +6,113 @@ import { prisma } from "../lib/prisma.js";
 import { env } from "../config/env.js";
 import { requireAuth } from "../middleware/auth.js";
 import type { AuthRequest } from "../types/index.js";
+
 const router = Router();
-const registerSchema = z.object({ name: z.string().trim().min(2, "Please enter your full name."), email: z.string().email("Enter a valid email."), password: z.string().min(6, "Password must be at least 6 characters.") });
-const sign = (id: number, email: string) => jwt.sign({ userId: id, email }, env.jwtSecret, { expiresIn: env.jwtExpiresIn } as jwt.SignOptions);
-const userDto = (user: { id: number; name: string; email: string; createdAt: Date }) => ({ id: user.id, name: user.name, email: user.email, createdAt: user.createdAt });
-router.post("/register", async (req, res, next) => { try { const data = registerSchema.parse(req.body); const existing = await prisma.user.findUnique({ where: { email: data.email.toLowerCase() } }); if (existing) return res.status(409).json({ success: false, message: "An account with this email already exists." }); const user = await prisma.user.create({ data: { name: data.name, email: data.email.toLowerCase(), passwordHash: await bcrypt.hash(data.password, 12) } }); return res.status(201).json({ success: true, data: { token: sign(user.id, user.email), user: userDto(user) } }); } catch (e) { next(e); } });
-router.post("/login", async (req, res, next) => { try { const data = z.object({ email: z.string().email(), password: z.string().min(1) }).parse(req.body); const user = await prisma.user.findUnique({ where: { email: data.email.toLowerCase() } }); if (!user || !(await bcrypt.compare(data.password, user.passwordHash))) return res.status(401).json({ success: false, message: "Invalid email or password." }); return res.json({ success: true, data: { token: sign(user.id, user.email), user: userDto(user) } }); } catch (e) { next(e); } });
-router.get("/me", requireAuth, async (req: AuthRequest, res, next) => { try { const user = await prisma.user.findUnique({ where: { id: req.user!.userId } }); if (!user) return res.status(404).json({ success: false, message: "User not found." }); return res.json({ success: true, data: userDto(user) }); } catch (e) { next(e); } });
+
+const registerSchema = z.object({
+  name: z.string().trim().min(2, "Please enter your full name."),
+  email: z.string().email("Enter a valid email."),
+  password: z.string().min(6, "Password must be at least 6 characters."),
+});
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
+
+const sign = (id: number, email: string) =>
+  jwt.sign({ userId: id, email }, env.jwtSecret, {
+    expiresIn: env.jwtExpiresIn,
+  } as jwt.SignOptions);
+
+const userDto = (user: { id: number; name: string; email: string; createdAt: Date }) => ({
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  createdAt: user.createdAt,
+});
+
+router.post("/register", async (req, res, next) => {
+  try {
+    const data = registerSchema.parse(req.body);
+    const existing = await prisma.user.findUnique({
+      where: { email: data.email.toLowerCase() },
+    });
+
+    if (existing) {
+      return res.status(409).json({
+        success: false,
+        message: "An account with this email already exists.",
+      });
+    }
+
+    const user = await prisma.user.create({
+      data: {
+        name: data.name,
+        email: data.email.toLowerCase(),
+        passwordHash: await bcrypt.hash(data.password, 12),
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: {
+        token: sign(user.id, user.email),
+        user: userDto(user),
+      },
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/login", async (req, res, next) => {
+  try {
+    const data = loginSchema.parse(req.body);
+    const user = await prisma.user.findUnique({
+      where: { email: data.email.toLowerCase() },
+    });
+
+    if (!user || !(await bcrypt.compare(data.password, user.passwordHash))) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password.",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        token: sign(user.id, user.email),
+        user: userDto(user),
+      },
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.get("/me", requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: userDto(user),
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
 export default router;
+

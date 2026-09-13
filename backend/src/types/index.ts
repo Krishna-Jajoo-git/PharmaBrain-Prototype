@@ -1,70 +1,261 @@
-import type { Request } from "express";
+import { Router } from "express";
+import multer from "multer";
+import path from "node:path";
+import fs from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { z } from "zod";
+import { prisma } from "../lib/prisma.js";
+import { requireAuth } from "../middleware/auth.js";
+import { extractTextFromDocument } from "../services/ocr.service.js";
+import { put } from "@vercel/blob";
+import type { AuthRequest } from "../types/index.js";
 
-export interface JwtPayload {
-  userId: number;
-  email: string;
+const router = Router();
+const uploadDir = path.resolve("uploads");
+
+if (!process.env.VERCEL) {
+  await fs.mkdir(uploadDir, { recursive: true }).catch(() => undefined);
 }
 
-export interface AuthRequest extends Request {
-  user?: JwtPayload;
-}
+const allowed = new Set(["image/jpeg", "image/png", "application/pdf"]);
 
-export interface ImageQualityInfo {
-  blurScore: number;
-  contrastScore: number;
-  skewAngle: number;
-  isBlurry: boolean;
-  isLowContrast: boolean;
-  qualityWarnings: string[];
-}
+const localStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadDir),
+  filename: (_req, file, cb) =>
+    cb(null, `${randomUUID()}${path.extname(file.originalname).toLowerCase()}`),
+});
 
-export interface OcrRegion {
-  text: string;
-  confidence: number;         // 0.0 – 1.0
-  isLowConfidence: boolean;
-  needsReview: boolean;
-  boundingBox: [number, number, number, number] | null; // [x, y, w, h]
-  type: "text_block" | "table_cell" | "table" | "full_page";
-  tableInfo: {
-    row: number;
-    col: number;
-    totalRows: number;
-    totalCols: number;
-  } | null;
-}
+const storage = process.env.VERCEL
+  ? multer.memoryStorage()
+  : localStorage;
 
-export interface OcrResult {
-  /** Full raw extracted text preserving reading order and table rows. */
-  rawText: string;
-  /** Alias for rawText — used in structured output. */
-  text?: string;
-  /** Overall Tesseract confidence (0–100, legacy) or normalised 0–1 mean. */
-  confidence?: number;
-  wordsCount: number;
-  linesCount: number;
-  lines: string[];
-  engine: string;
-  /** Per-region structured extraction results with individual confidence. */
-  regions?: OcrRegion[];
-  /** Image quality diagnostics. */
-  quality?: ImageQualityInfo;
-  /** Whether any region was flagged as low-confidence and needs user review. */
-  hasLowConfidenceRegions?: boolean;
-  /** Total OCR processing time in milliseconds. */
-  processingTimeMs?: number;
-}
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) =>
+    cb(null, allowed.has(file.mimetype)),
+});
 
-export interface AnalysisResult {
-  documentType: "PRESCRIPTION" | "REPORT";
-  summary: string;
-  medicines: Array<{
-    name: string;
-    dosage: string;
-    duration: string;
-    instructions: string;
-  }>;
-  keyFindings: string[];
-  precautions: string[];
-  questionsForDoctor: string[];
-  disclaimer: string;
-}
+router.use(requireAuth);
+
+router.post(
+  "/upload",
+  upload.single("file"),
+  async (req: AuthRequest, res, next) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: "Choose a JPG, PNG, or PDF file up to 10 MB.",
+        });
+      }
+
+      const documentType = z
+        .enum(["PRESCRIPTION", "REPORT"])
+        .parse(req.body.documentType);
+
+      let storedFilename =
+        req.file.filename ||
+        `${randomUUID()}-${req.file.originalname}`;
+
+      let filePath = req.file.path || "";
+
+      if (process.env.VERCEL) {
+        if (process.env.BLOB_READ_WRITE_TOKEN && req.file.buffer) {
+          const blob = await put(
+            `pharmabrain/${randomUUID()}-${req.file.originalname}`,
+            req.file.buffer,
+            {
+              access: "public",
+              token: process.env.BLOB_READ_WRITE_TOKEN,
+            }
+          );
+
+          storedFilename = blob.pathname;
+          filePath = blob.url;
+        } else if (req.file.buffer) {
+          const base64 = req.file.buffer.toString("base64");
+
+          filePath = `data:${req.file.mimetype};base64,${base64}`;
+          storedFilename =
+            `${randomUUID()}-${req.file.originalname}`;
+        }
+      }
+
+      const document = await prisma.document.create({
+        data: {
+          userId: req.user!.userId,
+          originalName: req.file.originalname,
+          storedFilename,
+          documentType,
+          mimeType: req.file.mimetype,
+          filePath,
+        },
+      });
+
+      return res.status(201).json({
+        success: true,
+        data: document,
+      });
+    } catch (e) {
+      if (req.file?.path) {
+        await fs.unlink(req.file.path).catch(() => undefined);
+      }
+
+      next(e);
+    }
+  }
+);
+
+router.get("/", async (req: AuthRequest, res, next) => {
+  try {
+    const documents = await prisma.document.findMany({
+      where: { userId: req.user!.userId },
+      include: { analysis: true },
+      orderBy: { uploadedAt: "desc" },
+    });
+
+    return res.json({
+      success: true,
+      data: documents,
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.get("/:id", async (req: AuthRequest, res, next) => {
+  try {
+    const document = await prisma.document.findFirst({
+      where: {
+        id: Number(req.params.id),
+        userId: req.user!.userId,
+      },
+      include: { analysis: true },
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: "Document not found.",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: document,
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/:id/analyse", async (req: AuthRequest, res, next) => {
+  try {
+    const document = await prisma.document.findFirst({
+      where: {
+        id: Number(req.params.id),
+        userId: req.user!.userId,
+      },
+      include: { analysis: true },
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: "Document not found.",
+      });
+    }
+
+    if (document.analysis) {
+      return res.json({
+        success: true,
+        data: {
+          document,
+          analysis: document.analysis,
+          ocr: document.analysis.structuredResult,
+        },
+      });
+    }
+
+    await prisma.document.update({
+      where: { id: document.id },
+      data: { status: "ANALYSING" },
+    });
+
+    const ocrResult = await extractTextFromDocument(
+      document.filePath,
+      document.mimeType
+    );
+
+    const analysis = await prisma.analysis.create({
+      data: {
+        documentId: document.id,
+        summary: ocrResult.rawText,
+        structuredResult: ocrResult as any,
+        isDemo: false,
+      },
+    });
+
+    const updated = await prisma.document.update({
+      where: { id: document.id },
+      data: { status: "ANALYSED" },
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        document: updated,
+        analysis,
+        ocr: ocrResult,
+      },
+    });
+  } catch (e) {
+    const id = Number(req.params.id);
+
+    if (id) {
+      await prisma.document.updateMany({
+        where: {
+          id,
+          userId: req.user!.userId,
+        },
+        data: { status: "FAILED" },
+      });
+    }
+
+    next(e);
+  }
+});
+
+router.delete("/:id", async (req: AuthRequest, res, next) => {
+  try {
+    const document = await prisma.document.findFirst({
+      where: {
+        id: Number(req.params.id),
+        userId: req.user!.userId,
+      },
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: "Document not found.",
+      });
+    }
+
+    await prisma.document.delete({
+      where: { id: document.id },
+    });
+
+    await fs.unlink(document.filePath).catch(() => undefined);
+
+    return res.json({
+      success: true,
+      message: "Document deleted.",
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+export default router;

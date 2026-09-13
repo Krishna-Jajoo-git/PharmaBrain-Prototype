@@ -1,5 +1,10 @@
 export type DocumentType = "PRESCRIPTION" | "REPORT";
-export type DocumentStatus = "UPLOADED" | "ANALYSING" | "ANALYSED" | "FAILED";
+
+export type DocumentStatus =
+  | "UPLOADED"
+  | "ANALYSING"
+  | "ANALYSED"
+  | "FAILED";
 
 export interface User {
   id: number;
@@ -19,7 +24,7 @@ export interface ImageQualityInfo {
 
 export interface OcrRegion {
   text: string;
-  confidence: number;          // 0.0 – 1.0
+  confidence: number;
   isLowConfidence: boolean;
   needsReview: boolean;
   boundingBox: [number, number, number, number] | null;
@@ -46,19 +51,22 @@ export interface OcrResult {
   processingTimeMs?: number;
 }
 
+export interface Medicine {
+  name: string;
+  dosage: string;
+  duration: string;
+  instructions: string;
+}
+
 export interface AnalysisResult {
-  documentType?: DocumentType;
-  summary?: string;
-  medicines?: {
-    name: string;
-    dosage: string;
-    duration: string;
-    instructions: string;
-  }[];
-  keyFindings?: string[];
-  precautions?: string[];
-  questionsForDoctor?: string[];
-  disclaimer?: string;
+  documentType: DocumentType;
+  summary: string;
+  medicines: Medicine[];
+  keyFindings: string[];
+  potentialDiseases?: string[];
+  precautions: string[];
+  questionsForDoctor: string[];
+  disclaimer: string;
 }
 
 export interface Analysis {

@@ -1,1 +1,26 @@
-import { createContext, useContext, useState } from "react"; const C = createContext<(m: string) => void>(() => undefined); export const useToast = () => useContext(C); export function ToastProvider({ children }: { children: React.ReactNode }) { const [message, setMessage] = useState(""); const show = (m: string) => { setMessage(m); window.setTimeout(() => setMessage(""), 3500); }; return <C.Provider value={show}>{children}{message && <div className="fixed bottom-5 right-5 z-50 rounded-xl bg-slate-900 px-4 py-3 text-sm text-white shadow-xl">{message}</div>}</C.Provider>; }
+import { createContext, useContext, useState } from "react";
+
+const ToastContext = createContext<(m: string) => void>(() => undefined);
+
+export const useToast = () => useContext(ToastContext);
+
+export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const [message, setMessage] = useState("");
+
+  const show = (m: string) => {
+    setMessage(m);
+    window.setTimeout(() => setMessage(""), 3500);
+  };
+
+  return (
+    <ToastContext.Provider value={show}>
+      {children}
+      {message && (
+        <div className="fixed bottom-5 right-5 z-50 rounded-xl bg-slate-900 px-4 py-3 text-sm text-white shadow-xl">
+          {message}
+        </div>
+      )}
+    </ToastContext.Provider>
+  );
+}
+
