@@ -4,9 +4,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: { 50: "#effcfb", 100: "#d6f6f3", 500: "#0eaaa3", 600: "#07837f", 700: "#086966" }
-      }
-    }
+        brand: {
+          50: "#effcfb",
+          100: "#d6f6f3",
+          500: "#0eaaa3",
+          600: "#07837f",
+          700: "#086966",
+        },
+      },
+    },
   },
-  plugins: []
+  plugins: [],
 };
+

@@ -10,22 +10,28 @@ import {
   UploadPage,
 } from "./pages/AppPages";
 import { ProfilePage } from "./pages/ProfilePage";
+
 function Protected() {
   const { user, loading } = useAuth();
-  if (loading)
+
+  if (loading) {
     return (
       <div className="grid min-h-screen place-items-center text-brand-600">
         Loading PharmaBrain…
       </div>
     );
+  }
+
   return user ? <DashboardLayout /> : <Navigate to="/login" replace />;
 }
+
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<AuthPage mode="login" />} />
       <Route path="/register" element={<AuthPage mode="register" />} />
+
       <Route element={<Protected />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/upload" element={<UploadPage />} />
@@ -33,7 +39,9 @@ export default function App() {
         <Route path="/documents/:id" element={<ResultsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Route>
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
+

@@ -1,34 +1,27 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  BarChart3,
-  FileText,
-  LoaderCircle,
-  Trash2,
-  UploadCloud,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { BarChart3, FileText, LoaderCircle, Trash2, UploadCloud } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { documentApi } from "../services/api";
-import { useAuth } from "../context/AuthContext";
 import { useToast } from "../components/Toast";
-
 import type { Document, DocumentType, AnalysisResult } from "../types";
+
 export function DashboardPage() {
   const [docs, setDocs] = useState<Document[]>([]);
+
   useEffect(() => {
     documentApi
       .list()
       .then((r) => setDocs(r.data.data))
       .catch(() => undefined);
   }, []);
+
   const stats = [
     ["Total Documents", docs.length],
-    [
-      "Prescriptions",
-      docs.filter((d) => d.documentType === "PRESCRIPTION").length,
-    ],
+    ["Prescriptions", docs.filter((d) => d.documentType === "PRESCRIPTION").length],
     ["Reports", docs.filter((d) => d.documentType === "REPORT").length],
     ["Analysed", docs.filter((d) => d.status === "ANALYSED").length],
   ];
+
   return (
     <>
       <p className="text-sm text-brand-600">Your workspace</p>
@@ -36,20 +29,21 @@ export function DashboardPage() {
       <p className="mt-2 text-slate-500">
         Upload a sample document to receive a cautious, simplified summary.
       </p>
+
       <div className="mt-7 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {stats.map(([n, v]) => (
-          <div className="card p-4" key={String(n)}>
-            <p className="text-xs text-slate-500">{n}</p>
-            <p className="mt-1 text-2xl font-bold">{v}</p>
+        {stats.map(([name, val]) => (
+          <div className="card p-4" key={String(name)}>
+            <p className="text-xs text-slate-500">{name}</p>
+            <p className="mt-1 text-2xl font-bold">{val}</p>
           </div>
         ))}
       </div>
+
       <div className="mt-7 rounded-2xl bg-brand-600 p-7 text-white md:flex md:items-center md:justify-between">
         <div>
           <h2 className="text-xl font-bold">Ready to understand a document?</h2>
           <p className="mt-2 max-w-xl text-brand-100">
-            Upload a prescription or medical report to get a simplified AI
-            summary. Use sample / fake documents only.
+            Upload a prescription or medical report to get a simplified AI summary. Use sample / fake documents only.
           </p>
         </div>
         <div className="mt-5 flex gap-3 md:mt-0">
@@ -67,11 +61,13 @@ export function DashboardPage() {
           </Link>
         </div>
       </div>
+
       <section className="mt-8">
         <h2 className="text-lg font-bold">Recent documents</h2>
         <div className="card mt-3 divide-y">
-          {docs.slice(0, 5).map((d) => <DocumentRow key={d.id} d={d} />) ||
-            null}
+          {docs.slice(0, 5).map((d) => (
+            <DocumentRow key={d.id} d={d} />
+          ))}
           {!docs.length && (
             <p className="p-7 text-center text-sm text-slate-500">
               No documents yet. Your uploads will appear here.
@@ -82,6 +78,7 @@ export function DashboardPage() {
     </>
   );
 }
+
 function DocumentRow({ d, onDelete }: { d: Document; onDelete?: () => void }) {
   return (
     <div className="flex items-center gap-3 p-4">
@@ -91,10 +88,8 @@ function DocumentRow({ d, onDelete }: { d: Document; onDelete?: () => void }) {
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium">{d.originalName}</p>
         <p className="text-xs text-slate-500">
-          {d.documentType === "PRESCRIPTION"
-            ? "Prescription"
-            : "Medical report"}{" "}
-          · {new Date(d.uploadedAt).toLocaleDateString()}
+          {d.documentType === "PRESCRIPTION" ? "Prescription" : "Medical report"} ·{" "}
+          {new Date(d.uploadedAt).toLocaleDateString()}
         </p>
       </div>
       <span className="hidden rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 sm:inline">
@@ -118,25 +113,28 @@ function DocumentRow({ d, onDelete }: { d: Document; onDelete?: () => void }) {
     </div>
   );
 }
+
 export function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [type, setType] = useState<DocumentType>(
-    new URLSearchParams(location.search).get("type") === "REPORT"
-      ? "REPORT"
-      : "PRESCRIPTION",
+    new URLSearchParams(location.search).get("type") === "REPORT" ? "REPORT" : "PRESCRIPTION"
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const nav = useNavigate();
+
   const pick = (f?: File) => {
     if (!f) return;
-    if (!["image/jpeg", "image/png", "application/pdf"].includes(f.type))
+    if (!["image/jpeg", "image/png", "application/pdf"].includes(f.type)) {
       return setError("Use a JPG, PNG, or PDF file.");
-    if (f.size > 10 * 1024 * 1024)
+    }
+    if (f.size > 10 * 1024 * 1024) {
       return setError("Maximum file size is 10 MB.");
+    }
     setError("");
     setFile(f);
   };
+
   const go = async () => {
     if (!file) return setError("Please select a file first.");
     setBusy(true);
@@ -153,33 +151,44 @@ export function UploadPage() {
       setBusy(false);
     }
   };
+
   return (
     <div className="max-w-2xl">
       <h1 className="text-3xl font-bold">Upload document</h1>
       <p className="mt-2 text-slate-500">
-        Choose a sample prescription or report. Your file is uploaded only after
-        you choose Analyse Document.
+        Choose a sample prescription or report. Your file is uploaded only after you choose Analyse Document.
       </p>
+
       <div className="mt-7 card p-6">
         <div className="grid grid-cols-2 rounded-xl bg-slate-100 p-1">
           <button
             onClick={() => setType("PRESCRIPTION")}
-            className={`rounded-lg py-2 text-sm font-semibold ${type === "PRESCRIPTION" ? "bg-white shadow-sm text-brand-700" : "text-slate-500"}`}
+            className={`rounded-lg py-2 text-sm font-semibold ${
+              type === "PRESCRIPTION"
+                ? "bg-white shadow-sm text-brand-700"
+                : "text-slate-500"
+            }`}
           >
             Prescription
           </button>
           <button
             onClick={() => setType("REPORT")}
-            className={`rounded-lg py-2 text-sm font-semibold ${type === "REPORT" ? "bg-white shadow-sm text-brand-700" : "text-slate-500"}`}
+            className={`rounded-lg py-2 text-sm font-semibold ${
+              type === "REPORT"
+                ? "bg-white shadow-sm text-brand-700"
+                : "text-slate-500"
+            }`}
           >
             Medical Report
           </button>
         </div>
+
         {error && (
           <p className="mt-4 rounded-lg bg-rose-50 p-3 text-sm text-rose-700">
             {error}
           </p>
         )}
+
         <label
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
@@ -190,9 +199,7 @@ export function UploadPage() {
         >
           <UploadCloud className="text-brand-600" size={34} />
           <p className="mt-3 font-semibold">Drag and drop your file here</p>
-          <p className="mt-1 text-sm text-slate-500">
-            JPG, PNG, or PDF · maximum 10 MB
-          </p>
+          <p className="mt-1 text-sm text-slate-500">JPG, PNG, or PDF · maximum 10 MB</p>
           <span className="btn-secondary mt-4 text-sm">Choose file</span>
           <input
             className="hidden"
@@ -202,6 +209,7 @@ export function UploadPage() {
             onChange={(e) => pick(e.target.files?.[0])}
           />
         </label>
+
         {file && (
           <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-50 p-4">
             <div>
@@ -210,55 +218,52 @@ export function UploadPage() {
                 {(file.size / 1024 / 1024).toFixed(2)} MB
               </p>
             </div>
-            <button
-              onClick={() => setFile(null)}
-              className="text-sm font-semibold text-rose-600"
-            >
+            <button onClick={() => setFile(null)} className="text-sm font-semibold text-rose-600">
               Remove
             </button>
           </div>
         )}
-        <button
-          disabled={busy}
-          onClick={go}
-          className="btn-primary mt-6 w-full"
-        >
+
+        <button disabled={busy} onClick={go} className="btn-primary mt-6 w-full">
           {busy ? (
             <>
-              <LoaderCircle className="animate-spin" size={18} /> Uploading,
-              reading, and preparing your summary…
+              <LoaderCircle className="animate-spin" size={18} /> Uploading, reading, and preparing your summary…
             </>
           ) : (
             "Analyse Document"
           )}
         </button>
+
         <p className="mt-3 text-center text-xs text-slate-500">
-          Analysis is informational and may contain errors. Verify with a
-          qualified healthcare professional.
+          Analysis is informational and may contain errors. Verify with a qualified healthcare professional.
         </p>
       </div>
     </div>
   );
 }
+
 export function DocumentsPage() {
   const [docs, setDocs] = useState<Document[]>([]);
   const toast = useToast();
+
   const load = () => documentApi.list().then((r) => setDocs(r.data.data));
+
   useEffect(() => {
     load();
   }, []);
+
   const remove = async (id: number) => {
     if (!confirm("Delete this document and its saved analysis?")) return;
     await documentApi.remove(id);
     toast("Document deleted.");
     load();
   };
+
   return (
     <div>
       <h1 className="text-3xl font-bold">My Documents</h1>
-      <p className="mt-2 text-slate-500">
-        Only documents uploaded to your account are shown here.
-      </p>
+      <p className="mt-2 text-slate-500">Only documents uploaded to your account are shown here.</p>
+
       <div className="card mt-7 divide-y">
         {docs.map((d) => (
           <DocumentRow key={d.id} d={d} onDelete={() => remove(d.id)} />
@@ -276,79 +281,82 @@ export function DocumentsPage() {
     </div>
   );
 }
+
 export function ResultsPage() {
   const { id } = useParams();
   const [doc, setDoc] = useState<Document | null>(null);
+
   useEffect(() => {
-    if (id) documentApi.get(id).then((r) => setDoc(r.data.data));
+    if (id) {
+      documentApi.get(id).then((r) => setDoc(r.data.data));
+    }
   }, [id]);
-  if (!doc)
+
+  if (!doc) {
     return (
       <div className="flex items-center gap-2 text-slate-500">
         <LoaderCircle className="animate-spin" /> Loading summary…
       </div>
     );
+  }
+
   const r = doc.analysis?.structuredResult as AnalysisResult | undefined;
+
   return (
     <div className="max-w-4xl">
       <Link className="text-sm font-semibold text-brand-700" to="/documents">
         ← Back to documents
       </Link>
       <h1 className="mt-4 text-3xl font-bold">Analysis Summary</h1>
+
       <div className="card mt-6 p-6">
         <p className="font-semibold">{doc.originalName}</p>
         <p className="mt-1 text-sm text-slate-500">
-          {doc.documentType === "PRESCRIPTION"
-            ? "Prescription"
-            : "Medical report"}{" "}
-          · Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
+          {doc.documentType === "PRESCRIPTION" ? "Prescription" : "Medical report"} · Uploaded{" "}
+          {new Date(doc.uploadedAt).toLocaleDateString()}
         </p>
-        {doc.analysis?.isDemo && (
-          <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm font-medium text-amber-800">
-            DEMO MODE — Gemini was unavailable or not configured. This is sample
-            output, not a reading of your document.
-          </p>
-        )}
+
         <section className="mt-6">
           <h2 className="font-bold">Simplified summary</h2>
           <p className="mt-2 leading-7 text-slate-700">{r?.summary}</p>
         </section>
+
         <ResultList
           title="Medicines"
           items={
             r?.medicines.map((x) => {
               const isUnreadable =
-                !x.name ||
-                x.name === "Not clearly readable from the uploaded document.";
+                !x.name || x.name === "Not clearly readable from the uploaded document.";
               if (isUnreadable) {
-                return `Not clearly readable from the uploaded document.${x.instructions ? ` ${x.instructions}` : ""}`;
+                return `Not clearly readable from the uploaded document.${
+                  x.instructions ? ` ${x.instructions}` : ""
+                }`;
               }
               const details = [
-                x.dosage &&
-                x.dosage !== "Not clearly readable from the uploaded document."
+                x.dosage && x.dosage !== "Not clearly readable from the uploaded document."
                   ? x.dosage
                   : null,
-                x.duration &&
-                x.duration !==
-                  "Not clearly readable from the uploaded document."
+                x.duration && x.duration !== "Not clearly readable from the uploaded document."
                   ? x.duration
                   : null,
               ]
                 .filter(Boolean)
                 .join(" · ");
-              return `${x.name}${details ? ` — ${details}` : ""}${x.instructions ? `. ${x.instructions}` : ""}`;
+              return `${x.name}${details ? ` — ${details}` : ""}${
+                x.instructions ? `. ${x.instructions}` : ""
+              }`;
             }) ?? []
           }
         />
+
         <ResultList title="Key findings" items={r?.keyFindings ?? []} />
-        <ResultList
-          title="Important notes / precautions"
-          items={r?.precautions ?? []}
-        />
-        <ResultList
-          title="Questions to ask your doctor"
-          items={r?.questionsForDoctor ?? []}
-        />
+
+        <DiseaseResultList items={r?.potentialDiseases ?? []} />
+
+        <ResultList title="Important notes / precautions" items={r?.precautions ?? []} />
+
+        <ResultList title="Questions to ask your doctor" items={r?.questionsForDoctor ?? []} />
+
         <div className="mt-6 rounded-xl bg-slate-100 p-4 text-sm text-slate-600">
           <b>Medical disclaimer: </b>
           {r?.disclaimer}
@@ -357,6 +365,27 @@ export function ResultsPage() {
     </div>
   );
 }
+
+function DiseaseResultList({ items }: { items: string[] }) {
+  if (!items || !items.length) return null;
+  return (
+    <section className="mt-6 rounded-xl border border-amber-200 bg-amber-50/60 p-4">
+      <h2 className="flex items-center gap-2 font-bold text-amber-900">
+        <span className="inline-block h-2 w-2 rounded-full bg-amber-500"></span>
+        Potential Diseases & Clinical Risk Assessment
+      </h2>
+      <p className="mt-1 text-xs text-amber-700">
+        Educational predictions derived from prescription medications or report findings. Consult your physician for medical confirmation.
+      </p>
+      <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-amber-900">
+        {items.map((x, i) => (
+          <li key={i}>{x}</li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function ResultList({ title, items }: { title: string; items: string[] }) {
   if (!items.length) return null;
   return (
@@ -370,3 +399,4 @@ function ResultList({ title, items }: { title: string; items: string[] }) {
     </section>
   );
 }
+
