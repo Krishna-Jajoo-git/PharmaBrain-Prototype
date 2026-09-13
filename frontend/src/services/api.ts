@@ -39,8 +39,11 @@ export const documentApi = {
   upload: (body: FormData) =>
     api.post<ApiResponse<Document>>("/documents/upload", body),
 
+  ocr: (id: number) =>
+    api.post<ApiResponse<{ document: Document; analysis: any; ocr: any }>>(`/documents/${id}/ocr`),
+
   analyse: (id: number) =>
-    api.post(`/documents/${id}/analyse`),
+    api.post(`/documents/${id}/ocr`),
 
   remove: (id: number) =>
     api.delete(`/documents/${id}`),

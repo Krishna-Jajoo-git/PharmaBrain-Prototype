@@ -493,7 +493,7 @@ export function ProfilePage() {
                     to={d.analysis ? `/documents/${d.id}` : "/upload"}
                     className="text-xs font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg transition"
                   >
-                    {d.analysis ? "View Summary" : "Analyse"}
+                    {d.analysis ? "View Extracted Text" : "Extract Text (OCR)"}
                   </Link>
                 </div>
               </div>
