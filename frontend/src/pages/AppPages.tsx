@@ -316,12 +316,6 @@ export function ResultsPage() {
           {new Date(doc.uploadedAt).toLocaleDateString()}
         </p>
 
-        {doc.analysis?.isDemo && (
-          <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm font-medium text-amber-800">
-            DEMO MODE — Gemini was unavailable or not configured. This is sample output, not a reading of your document.
-          </p>
-        )}
-
         <section className="mt-6">
           <h2 className="font-bold">Simplified summary</h2>
           <p className="mt-2 leading-7 text-slate-700">{r?.summary}</p>
