@@ -10,8 +10,8 @@ export async function analyseFile(source: string | Buffer, mimeType: string, typ
     throw new Error("GEMINI_API_KEY is not configured on the server. Please provide a valid key in backend/.env.");
   }
 
-  // 4-Model Fallback Chain for quota & rate-limit resilience
-  const defaultChain = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-2.5-flash-lite"];
+  // Fallback Chain for active supported Gemini models
+  const defaultChain = ["gemini-3.6-flash", "gemini-3.5-flash-lite"];
   const modelsToTry = Array.from(new Set([
     env.geminiModel,
     ...env.fallbackModels,

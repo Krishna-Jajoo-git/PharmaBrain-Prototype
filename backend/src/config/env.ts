@@ -7,10 +7,10 @@ export const env = {
   jwtSecret: required("JWT_SECRET", "development_only_change_me"),
   jwtExpiresIn: required("JWT_EXPIRES_IN", "1d"),
   geminiKey: process.env.GEMINI_API_KEY?.startsWith("replace_") ? "" : (process.env.GEMINI_API_KEY || ""),
-  geminiModel: required("GEMINI_MODEL", "gemini-2.5-flash"),
+  geminiModel: required("GEMINI_MODEL", "gemini-3.6-flash"),
   fallbackModels: (
     process.env.GEMINI_FALLBACK_MODELS ||
-    "gemini-2.5-flash,gemini-2.5-pro,gemini-2.0-flash,gemini-2.5-flash-lite"
+    "gemini-3.6-flash,gemini-3.5-flash-lite"
   )
     .split(",")
     .map((m) => m.trim())
