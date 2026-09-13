@@ -1,3 +1,67 @@
-import { FileText, LayoutDashboard, LogOut, Menu, Upload, UserCircle } from "lucide-react"; import { NavLink, Outlet, useNavigate } from "react-router-dom"; import { Logo } from "../components/Logo"; import { useAuth } from "../context/AuthContext";
-const nav = [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }, { to: "/upload", label: "Upload Document", icon: Upload }, { to: "/documents", label: "My Documents", icon: FileText }, { to: "/profile", label: "Profile", icon: UserCircle }];
-export function DashboardLayout() { const { user, logout } = useAuth(); const navigate = useNavigate(); const leave = () => { logout(); navigate("/"); }; return <div className="min-h-screen bg-slate-50 md:flex"><aside className="border-b bg-white md:fixed md:inset-y-0 md:w-64 md:border-r md:border-b-0"><div className="flex h-16 items-center justify-between px-5 md:h-20"><Logo/><Menu className="md:hidden"/></div><nav className="flex gap-1 overflow-x-auto px-3 pb-3 md:block md:px-4">{nav.map(({to,label,icon:Icon}) => <NavLink key={to} to={to} className={({isActive}) => `flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${isActive ? "bg-brand-50 text-brand-700" : "text-slate-600 hover:bg-slate-50"}`}><Icon size={18}/>{label}</NavLink>)}</nav><div className="hidden border-t p-4 md:absolute md:bottom-0 md:block md:w-full"><p className="mb-3 truncate text-sm font-semibold">{user?.name}</p><button onClick={leave} className="flex items-center gap-2 text-sm text-slate-500 hover:text-rose-600"><LogOut size={17}/>Logout</button></div></aside><main className="md:ml-64"><div className="mx-auto max-w-6xl p-5 md:p-9"><Outlet/></div></main></div>; }
+import { FileText, LayoutDashboard, LogOut, Menu, Upload, UserCircle } from "lucide-react";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Logo } from "../components/Logo";
+import { useAuth } from "../context/AuthContext";
+
+const navItems = [
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/upload", label: "Upload Document", icon: Upload },
+  { to: "/documents", label: "My Documents", icon: FileText },
+  { to: "/profile", label: "Profile", icon: UserCircle },
+];
+
+export function DashboardLayout() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const leave = () => {
+    logout();
+    navigate("/");
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 md:flex">
+      <aside className="border-b bg-white md:fixed md:inset-y-0 md:w-64 md:border-r md:border-b-0">
+        <div className="flex h-16 items-center justify-between px-5 md:h-20">
+          <Logo />
+          <Menu className="md:hidden" />
+        </div>
+
+        <nav className="flex gap-1 overflow-x-auto px-3 pb-3 md:block md:px-4">
+          {navItems.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                `flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${
+                  isActive ? "bg-brand-50 text-brand-700" : "text-slate-600 hover:bg-slate-50"
+                }`
+              }
+            >
+              <Icon size={18} />
+              {label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="hidden border-t p-4 md:absolute md:bottom-0 md:block md:w-full">
+          <p className="mb-3 truncate text-sm font-semibold">{user?.name}</p>
+          <button
+            onClick={leave}
+            className="flex items-center gap-2 text-sm text-slate-500 hover:text-rose-600"
+          >
+            <LogOut size={17} />
+            Logout
+          </button>
+        </div>
+      </aside>
+
+      <main className="md:ml-64">
+        <div className="mx-auto max-w-6xl p-5 md:p-9">
+          <Outlet />
+        </div>
+      </main>
+    </div>
+  );
+}
+

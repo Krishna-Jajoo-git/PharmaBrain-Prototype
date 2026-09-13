@@ -11,8 +11,23 @@ PharmaBrain is a full-stack academic demonstration prototype for JWT authenticat
 - Gemini document analysis kept entirely on the backend
 - Automatic, visibly labelled Demo Mode fallback when Gemini is not configured or fails
 - Document history, structured results, profile, deletion confirmation, responsive UI, loading/error/empty states
+- 4-model Google Gemini fallback chain (`gemini-2.5-flash` → `gemini-2.5-pro` → `gemini-2.0-flash` → `gemini-2.5-flash-lite`) for rate-limit resilience
+- AI disease prediction & health risk assessment from prescriptions and medical reports
 
-## Structure
+## System Vision & Architectural Roadmap
+
+```text
+Patient-Centric Medical Record System
+    │
+    ├── Complete Medical History         [Implemented in Prototype]
+    ├── AI Document Extraction           [Implemented in Prototype - Multi-Model AI]
+    ├── Medical Timeline                 [Roadmap - Future Phase]
+    ├── Health Trends                    [Roadmap - Future Phase]
+    ├── Medication History               [Roadmap - Future Phase]
+    ├── Side-Effect Tracking             [Roadmap - Future Phase]
+    ├── AI Health Summary                [Implemented in Prototype]
+    └── Secure Sharing With Doctor       [Roadmap - Future Phase]
+```
 
 ```text
 frontend/          React, Vite, Tailwind application

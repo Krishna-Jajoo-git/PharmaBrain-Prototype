@@ -1,4 +1,16 @@
-import app from "./app.js"; import { env } from "./config/env.js"; import { prisma } from "./lib/prisma.js";
-const server = app.listen(env.port, () => console.log(`PharmaBrain API listening on http://localhost:${env.port}`));
-async function close() { await prisma.$disconnect(); server.close(); }
-process.on("SIGINT", close); process.on("SIGTERM", close);
+import app from "./app.js";
+import { env } from "./config/env.js";
+import { prisma } from "./lib/prisma.js";
+
+const server = app.listen(env.port, () => {
+  console.log(`PharmaBrain API listening on http://localhost:${env.port}`);
+});
+
+async function close() {
+  await prisma.$disconnect();
+  server.close();
+}
+
+process.on("SIGINT", close);
+process.on("SIGTERM", close);
+
