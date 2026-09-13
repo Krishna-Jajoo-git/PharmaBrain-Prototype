@@ -1,0 +1,8 @@
+# Python sidecar used only for OpenCV image quality/preprocessing/layout work.
+# Tesseract.js remains the baseline OCR engine used by the Node service.
+numpy>=1.26
+opencv-python-headless>=4.10
+
+# Optional: enables the standalone Python fixture preview to call a locally
+# installed Tesseract CLI. The production service does not require it.
+pytesseract>=0.3.10

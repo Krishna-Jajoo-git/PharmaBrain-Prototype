@@ -8,13 +8,42 @@ export interface User {
   createdAt: string;
 }
 
+export interface ImageQualityInfo {
+  blurScore: number;
+  contrastScore: number;
+  skewAngle: number;
+  isBlurry: boolean;
+  isLowContrast: boolean;
+  qualityWarnings: string[];
+}
+
+export interface OcrRegion {
+  text: string;
+  confidence: number;          // 0.0 – 1.0
+  isLowConfidence: boolean;
+  needsReview: boolean;
+  boundingBox: [number, number, number, number] | null;
+  type: "text_block" | "table_cell" | "table" | "full_page";
+  tableInfo: {
+    row: number;
+    col: number;
+    totalRows: number;
+    totalCols: number;
+  } | null;
+}
+
 export interface OcrResult {
   rawText: string;
+  text?: string;
   confidence?: number;
   wordsCount: number;
   linesCount: number;
   lines?: string[];
   engine?: string;
+  regions?: OcrRegion[];
+  quality?: ImageQualityInfo;
+  hasLowConfidenceRegions?: boolean;
+  processingTimeMs?: number;
 }
 
 export interface AnalysisResult {

@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  AlertTriangle,
   BarChart3,
   Check,
   Copy,
   Download,
   FileCode,
   FileText,
+  Layers,
   LoaderCircle,
   Sparkles,
   Trash2,
@@ -15,7 +17,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { documentApi } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../components/Toast";
-import type { Document, DocumentType, OcrResult } from "../types";
+import type { Document, DocumentType, OcrResult, OcrRegion } from "../types";
+
 
 export function DashboardPage() {
   const [docs, setDocs] = useState<Document[]>([]);
@@ -318,7 +321,7 @@ export function ResultsPage() {
   const [loading, setLoading] = useState(true);
   const [ocrBusy, setOcrBusy] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [viewMode, setViewMode] = useState<"clean" | "lines">("clean");
+  const [viewMode, setViewMode] = useState<"clean" | "lines" | "regions">("clean");
   const toast = useToast();
 
   const loadDocument = () => {
@@ -376,6 +379,11 @@ export function ResultsPage() {
   const linesCount = ocr?.linesCount ?? lines.length;
   const confidence = ocr?.confidence ?? 100;
   const engine = ocr?.engine || "OCR Processing Service";
+  const regions: OcrRegion[] = ocr?.regions || [];
+  const quality = ocr?.quality;
+  const hasLowConfidence = ocr?.hasLowConfidenceRegions ?? false;
+  const processingTimeMs = ocr?.processingTimeMs;
+
 
   const handleCopy = () => {
     if (!rawText) return;
@@ -467,17 +475,47 @@ export function ResultsPage() {
         </div>
         <div className="card p-4">
           <p className="text-xs text-slate-400 font-semibold uppercase">OCR Confidence</p>
-          <p className="mt-1 text-2xl font-extrabold text-emerald-600">
+          <p className={`mt-1 text-2xl font-extrabold ${confidence >= 65 ? "text-emerald-600" : "text-amber-500"}`}>
             {confidence > 0 ? `${confidence}%` : "—"}
           </p>
         </div>
         <div className="card p-4">
-          <p className="text-xs text-slate-400 font-semibold uppercase">OCR Engine</p>
-          <p className="mt-1 text-sm font-bold text-slate-800 truncate" title={engine}>
-            {engine}
+          <p className="text-xs text-slate-400 font-semibold uppercase">Processing Time</p>
+          <p className="mt-1 text-2xl font-extrabold text-slate-900">
+            {processingTimeMs != null ? `${(processingTimeMs / 1000).toFixed(1)}s` : "—"}
           </p>
         </div>
       </div>
+
+      {/* Quality Warnings */}
+      {quality && quality.qualityWarnings.length > 0 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+          <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-bold text-amber-800">Image Quality Notes</p>
+            <ul className="mt-1 space-y-0.5">
+              {quality.qualityWarnings.map((w, i) => (
+                <li key={i} className="text-xs text-amber-700">{w}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* Low-Confidence Banner */}
+      {hasLowConfidence && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 flex items-start gap-3">
+          <AlertTriangle size={16} className="text-rose-500 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-bold text-rose-800">Manual Review Needed</p>
+            <p className="mt-0.5 text-xs text-rose-700">
+              One or more text regions were extracted with low confidence. These regions are
+              marked in the <strong>Regions &amp; Confidence</strong> view. Please verify
+              the highlighted sections manually.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Main Extracted Text Display */}
       <div className="card p-6">
@@ -510,19 +548,36 @@ export function ResultsPage() {
                     : "text-slate-500 hover:text-slate-700"
                 }`}
               >
-                Numbered Lines ({lines.length})
+                Lines ({lines.length})
               </button>
+              {regions.length > 0 && (
+                <button
+                  onClick={() => setViewMode("regions")}
+                  className={`px-3 py-1 rounded-md transition flex items-center gap-1 ${
+                    viewMode === "regions"
+                      ? "bg-white text-slate-900 shadow-xs"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  <Layers size={11} />
+                  Regions ({regions.length})
+                  {hasLowConfidence && (
+                    <span className="ml-1 w-1.5 h-1.5 rounded-full bg-rose-500 inline-block" />
+                  )}
+                </button>
+              )}
             </div>
           )}
         </div>
 
         {rawText ? (
           <div>
-            {viewMode === "clean" ? (
+            {viewMode === "clean" && (
               <div className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-slate-800 bg-slate-50 p-5 rounded-xl border border-slate-200 select-text overflow-x-auto">
                 {rawText}
               </div>
-            ) : (
+            )}
+            {viewMode === "lines" && (
               <div className="bg-slate-50 rounded-xl border border-slate-200 divide-y divide-slate-100 overflow-x-auto max-h-[600px] overflow-y-auto">
                 {lines.map((line, idx) => (
                   <div
@@ -536,6 +591,13 @@ export function ResultsPage() {
                       {line}
                     </span>
                   </div>
+                ))}
+              </div>
+            )}
+            {viewMode === "regions" && (
+              <div className="space-y-3 max-h-[700px] overflow-y-auto">
+                {regions.map((region, idx) => (
+                  <RegionCard key={idx} region={region} index={idx} />
                 ))}
               </div>
             )}
@@ -571,11 +633,72 @@ export function ResultsPage() {
           <div>
             <p className="font-bold text-slate-800">OCR Text Extraction Scope:</p>
             <p className="mt-0.5 text-slate-600">
-              This module extracts all readable characters directly from the uploaded document. As specified, no medical diagnosis, medicine identification, dosage mapping, symptom detection, or LLM interpretation has been applied.
+              This module extracts all readable characters directly from the uploaded document
+              using an enhanced multi-stage pipeline (quality check → OpenCV preprocessing →
+              layout detection → Tesseract OCR). No medical diagnosis, medicine identification,
+              dosage mapping, symptom detection, or LLM interpretation is applied.
             </p>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// RegionCard — renders a single OCR region with confidence badge
+// ---------------------------------------------------------------------------
+
+function RegionCard({ region, index }: { region: OcrRegion; index: number }) {
+  const conf = Math.round(region.confidence * 100);
+  const isLow = region.isLowConfidence;
+  const isTable = region.type === "table_cell" || region.type === "table";
+
+  const badgeClass = isLow
+    ? "bg-rose-100 text-rose-700 border border-rose-200"
+    : conf >= 85
+    ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+    : "bg-amber-100 text-amber-700 border border-amber-200";
+
+  const cardClass = isLow
+    ? "rounded-xl border border-rose-200 bg-rose-50 p-4"
+    : "rounded-xl border border-slate-200 bg-slate-50 p-4";
+
+  return (
+    <div className={cardClass}>
+      <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-slate-400 uppercase">
+            Region {index + 1}
+            {isTable && region.tableInfo != null
+              ? ` · Row ${region.tableInfo.row + 1}, Col ${region.tableInfo.col + 1}`
+              : ""}
+          </span>
+          {isTable && (
+            <span className="rounded-full bg-brand-50 border border-brand-100 px-2 py-0.5 text-xs font-bold text-brand-700">
+              Table Cell
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {isLow && (
+            <span className="flex items-center gap-1 rounded-full bg-rose-100 border border-rose-200 px-2 py-0.5 text-xs font-bold text-rose-700">
+              <AlertTriangle size={10} /> Needs Review
+            </span>
+          )}
+          <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${badgeClass}`}>
+            {conf}% confidence
+          </span>
+        </div>
+      </div>
+
+      {region.text ? (
+        <p className="font-mono text-sm text-slate-800 whitespace-pre-wrap select-text break-words">
+          {region.text}
+        </p>
+      ) : (
+        <p className="text-xs text-slate-400 italic">No text detected in this region.</p>
+      )}
     </div>
   );
 }

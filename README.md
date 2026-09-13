@@ -68,6 +68,24 @@ USE_MOCK_AI=false
 
 When the key is blank, invalid, or `USE_MOCK_AI=true`, the app intentionally returns a clearly labelled `DEMO MODE` sample result. Gemini is never exposed to frontend code.
 
+### OCR prerequisites and fixture benchmark
+
+The image OCR sidecar uses OpenCV for quality checks, deskewing, variant
+generation, and layout detection. Install its isolated dependencies before
+running image OCR locally:
+
+```bash
+cd backend
+python -m pip install -r requirements-ocr.txt
+npm run test:ocr
+```
+
+The benchmark creates five synthetic, non-clinical fixtures (clear, blurry,
+handwriting-like, multi-region, and table layout) under
+`backend/uploads/_benchmark`. It prints each original/preprocessed path, OCR
+text, per-region/overall confidence, and processing time. Difficult handwriting
+is intentionally kept as low-confidence OCR output for manual confirmation.
+
 ## Frontend setup
 
 In a second terminal:
